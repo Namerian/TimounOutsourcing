@@ -9,6 +9,7 @@ namespace NPC_AI
 		private IStateMachine _stateMachine;
 
 		private bool _isActive;
+		private bool _switchToMovement;
 
 		//===============================================
 		//
@@ -33,17 +34,26 @@ namespace NPC_AI
 			//Debug.Log ("NPC " + this.name + " :" + "IdleState.OnEnter: called");
 
 			_isActive = true;
+			_switchToMovement = false;
 
-			Invoke ("SwitchState", 1f);
+			Invoke ("SwitchState", 1.5f);
 		}
 
 		public void OnExit ()
 		{
 			_isActive = false;
+			_switchToMovement = false;
 		}
 
 		public void OnUpdate ()
 		{
+			if (!_isActive) {
+				return;
+			}
+
+			if (_switchToMovement) {
+				_stateMachine.SwitchState (_stateMachine.MovementState);
+			}
 		}
 
 		//===============================================
@@ -52,13 +62,11 @@ namespace NPC_AI
 
 		private void SwitchState ()
 		{
-			//Debug.Log ("NPC " + this.name + " :" + "IdleState.SwitchState: called");
-
 			if (!_isActive) {
 				return;
 			}
 
-			_stateMachine.SwitchState (_stateMachine.MovementState);
+			_switchToMovement = true;
 		}
 	}
 }

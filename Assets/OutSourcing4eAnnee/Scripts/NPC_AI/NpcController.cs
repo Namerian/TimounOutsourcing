@@ -8,7 +8,9 @@ namespace NPC_AI
 	public class NpcController : MonoBehaviour, IStateMachine
 	{
 		//
-		public EMovementState _movementType;
+		public EMovementState _MovementState;
+		public bool _UseInteractionState;
+		public bool _UseFollowObjectState;
 
 		//
 		private IState _currentState = null;
@@ -20,11 +22,17 @@ namespace NPC_AI
 
 		private NavMeshAgent _navMeshAgent;
 
-
+		private bool _canSwitchState = false;
 
 		//===========================================================
 		//
 		//===========================================================
+
+		void OnValidate ()
+		{
+			//Invoke is necessary here because it is not allowed to destroy a script during OnValidate!
+			Invoke ("UpdateObjectComposition", 0.5f);
+		}
 
 		// Use this for initialization
 		void Start ()
@@ -34,7 +42,7 @@ namespace NPC_AI
 			//**************************************************************************
 			_idleState = this.GetComponent<NPC_AI.IdleState> ();
 
-			switch (_movementType) {
+			switch (_MovementState) {
 			case EMovementState.LoopingInterestPoint:
 				_movementState = this.GetComponent<LoopingInterestPointMovementState> ();
 				break;
@@ -46,7 +54,7 @@ namespace NPC_AI
 				break;
 			}
 
-			_interactionState = this.GetComponent<InteractingState> ();
+			_interactionState = this.GetComponent<InteractionState> ();
 
 			if (_interactionState == null) {
 				_interactionState = new EmptyState ();
@@ -55,7 +63,6 @@ namespace NPC_AI
 			_followObjectState = this.GetComponent<FollowTaggedObjectState> ();
 
 			if (_followObjectState == null) {
-				//Debug.Log ("NPC " + this.name + ": has no FollowTaggedObject State!");
 				_followObjectState = new EmptyState ();
 			}
 		}
@@ -63,6 +70,8 @@ namespace NPC_AI
 		// Update is called once per frame
 		void Update ()
 		{
+			_canSwitchState = true;
+
 			if (_currentState == null) {
 				(this as IStateMachine).SwitchState (_idleState);
 			}
@@ -90,6 +99,8 @@ namespace NPC_AI
 					(this as IStateMachine).SwitchState (bestState);
 				}
 			}
+
+			_canSwitchState = false;
 		}
 
 		//===========================================================
@@ -108,6 +119,11 @@ namespace NPC_AI
 
 		void IStateMachine.SwitchState (NPC_AI.IState state)
 		{
+			if (!_canSwitchState) {
+				Debug.LogError ("NPC " + this.name + ": tried to switch state outside of currentState.Update!");
+				return;
+			}
+
 			//Debug.Log ("NPC " + this.name + " : SwitchState called : new state = " + state.GetType ());
 
 			if (_currentState != null) {
@@ -128,6 +144,80 @@ namespace NPC_AI
 			states.Add (_followObjectState);
 
 			return states;
+		}
+
+		//===========================================================
+		//
+		//===========================================================
+
+		private void UpdateObjectComposition ()
+		{
+			// IDLE STATE
+			IState idleState = this.GetComponent<NPC_AI.IdleState> ();
+
+			if (idleState == null) {
+				this.gameObject.AddComponent<IdleState> ();
+			}
+
+			// MOVEMENT STATE
+			IState movementState;
+			switch (_MovementState) {
+			case EMovementState.LoopingInterestPoint:
+				if ((movementState = this.GetComponent<RandomInterestPointMovementState> ()) != null) {
+					DestroyImmediate (movementState as MonoBehaviour, true);
+				}
+
+				if ((movementState = this.GetComponent<ZoneMovementState> ()) != null) {
+					DestroyImmediate (movementState as MonoBehaviour, true);
+				}
+
+				if ((movementState = this.GetComponent<LoopingInterestPointMovementState> ()) == null) {
+					this.gameObject.AddComponent<LoopingInterestPointMovementState> ();
+				}
+				break;
+			case EMovementState.RandomInterestPoint:
+				if ((movementState = this.GetComponent<LoopingInterestPointMovementState> ()) != null) {
+					DestroyImmediate (movementState as MonoBehaviour, true);
+				}
+
+				if ((movementState = this.GetComponent<ZoneMovementState> ()) != null) {
+					DestroyImmediate (movementState as MonoBehaviour, true);
+				}
+
+				if ((movementState = this.GetComponent<RandomInterestPointMovementState> ()) == null) {
+					this.gameObject.AddComponent<RandomInterestPointMovementState> ();
+				}
+				break;
+			case EMovementState.Zone:
+				if ((movementState = this.GetComponent<LoopingInterestPointMovementState> ()) != null) {
+					DestroyImmediate (movementState as MonoBehaviour, true);
+				}
+
+				if ((movementState = this.GetComponent<RandomInterestPointMovementState> ()) != null) {
+					DestroyImmediate (movementState as MonoBehaviour, true);
+				}
+
+				if ((movementState = this.GetComponent<ZoneMovementState> ()) == null) {
+					this.gameObject.AddComponent<ZoneMovementState> ();
+				}
+				break;
+			}
+
+			// INTERACTION STATE
+			IState interactionState = this.GetComponent<InteractionState> ();
+			if (_UseInteractionState && interactionState == null) {
+				this.gameObject.AddComponent<InteractionState> ();
+			} else if (!_UseInteractionState && interactionState != null) {
+				DestroyImmediate (interactionState as MonoBehaviour, true);
+			}
+
+			// FOLLOW OBJECT STATE
+			IState followObjectState = this.GetComponent<FollowTaggedObjectState> ();
+			if (_UseFollowObjectState && followObjectState == null) {
+				this.gameObject.AddComponent<FollowTaggedObjectState> ();
+			} else if (!_UseFollowObjectState && _followObjectState != null) {
+				DestroyImmediate (followObjectState as MonoBehaviour, true);
+			}
 		}
 	}
 }

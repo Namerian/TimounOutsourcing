@@ -32,14 +32,6 @@ namespace NPC_AI
 			_triggerController.Initialize (this, _DetectionRange);
 		}
 
-		/*void OnCollisionEnter (Collision other)
-		{
-			if (other.gameObject.Equals (_targetObject)) {
-				Debug.Log ("NPC " + this.name + ": collided with target");
-				_hasCollidedWithTarget = true;
-			}
-		}*/
-
 		//===============================================
 		// IState implementation
 		//===============================================
@@ -47,10 +39,8 @@ namespace NPC_AI
 		public int GetActivationValue ()
 		{
 			if (_taggedObjectsInRange.Count == 0) {
-				//Debug.Log ("test");
 				return 0;
 			} else {
-				//Debug.Log ("NPC " + this.name + ": should switch to FollowTaggedObject State soon!");
 				return _BaseActivationValue;
 			} 
 		}
@@ -77,6 +67,8 @@ namespace NPC_AI
 				_targetObject = nearestObject;
 				_stateMachine.NavMeshAgent.SetDestination (_targetObject.transform.position);
 				_stateMachine.NavMeshAgent.Resume ();
+			} else {
+				_stateMachine.SwitchState (_stateMachine.IdleState);
 			}
 		}
 
