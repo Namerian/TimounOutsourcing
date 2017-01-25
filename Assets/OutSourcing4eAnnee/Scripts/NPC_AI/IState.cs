@@ -6,6 +6,8 @@ namespace NPC_AI
 {
 	public interface IState
 	{
+		int GetActivationValue ();
+
 		void OnEnter ();
 
 		void OnExit ();

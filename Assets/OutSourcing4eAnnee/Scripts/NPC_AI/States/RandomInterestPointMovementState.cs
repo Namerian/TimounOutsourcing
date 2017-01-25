@@ -10,7 +10,7 @@ namespace NPC_AI
 	{
 		public InterestPointManager.InterestType _InterestType;
 
-		private NpcController _npcController;
+		private IStateMachine _stateMachine;
 
 		private bool _isActive;
 		private InterestPoint _currentDestination;
@@ -21,12 +21,17 @@ namespace NPC_AI
 
 		void Start ()
 		{
-			_npcController = this.GetComponent<NpcController> ();
+			_stateMachine = this.GetComponent<IStateMachine> ();
 		}
 
 		//===========================================================
 		//
 		//===========================================================
+
+		public int GetActivationValue ()
+		{
+			return 20;
+		}
 
 		public void OnEnter ()
 		{
@@ -40,11 +45,11 @@ namespace NPC_AI
 
 			if (possibleDestinations.Count == 0) {
 				Debug.LogError ("NPC " + this.name + " :" + "RandomInterestPointMovementState: no possible destinations!");
-				_npcController.SwitchState (_npcController.IdleState);
+				_stateMachine.SwitchState (_stateMachine.IdleState);
 			} else {
 				_currentDestination = possibleDestinations [Random.Range (0, possibleDestinations.Count)];
-				_npcController.NavMeshAgent.SetDestination (_currentDestination.transform.position);
-				_npcController.NavMeshAgent.Resume ();
+				_stateMachine.NavMeshAgent.SetDestination (_currentDestination.transform.position);
+				_stateMachine.NavMeshAgent.Resume ();
 			}
 		}
 
@@ -60,9 +65,9 @@ namespace NPC_AI
 			}
 
 			//check if destination reached
-			if (!_npcController.NavMeshAgent.pathPending && _npcController.NavMeshAgent.remainingDistance <= _npcController.NavMeshAgent.stoppingDistance) {
-				_npcController.NavMeshAgent.Stop ();
-				_npcController.SwitchState (_npcController.IdleState);
+			if (!_stateMachine.NavMeshAgent.pathPending && _stateMachine.NavMeshAgent.remainingDistance <= _stateMachine.NavMeshAgent.stoppingDistance) {
+				_stateMachine.NavMeshAgent.Stop ();
+				_stateMachine.SwitchState (_stateMachine.IdleState);
 			}
 		}
 

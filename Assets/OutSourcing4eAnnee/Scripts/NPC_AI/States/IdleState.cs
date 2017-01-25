@@ -6,13 +6,26 @@ namespace NPC_AI
 {
 	public class IdleState : MonoBehaviour, IState
 	{
+		private IStateMachine _stateMachine;
+
 		private bool _isActive;
 
-		private NpcController _npcController;
+		//===============================================
+		//
+		//===============================================
 
 		void Start ()
 		{
-			_npcController = this.GetComponent<NpcController> ();
+			_stateMachine = this.GetComponent<IStateMachine> ();
+		}
+
+		//===============================================
+		//
+		//===============================================
+
+		public int GetActivationValue ()
+		{
+			return 20;
 		}
 
 		public void OnEnter ()
@@ -33,6 +46,10 @@ namespace NPC_AI
 		{
 		}
 
+		//===============================================
+		//
+		//===============================================
+
 		private void SwitchState ()
 		{
 			//Debug.Log ("NPC " + this.name + " :" + "IdleState.SwitchState: called");
@@ -41,7 +58,7 @@ namespace NPC_AI
 				return;
 			}
 
-			_npcController.SwitchState (_npcController.MovementState);
+			_stateMachine.SwitchState (_stateMachine.MovementState);
 		}
 	}
 }

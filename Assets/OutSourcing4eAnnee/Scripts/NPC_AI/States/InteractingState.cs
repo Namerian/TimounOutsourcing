@@ -8,11 +8,16 @@ namespace NPC_AI
 	{
 		private bool _isActive;
 
-		private NpcController _npcController;
+		private IStateMachine _stateMachine;
 
 		void Start ()
 		{
-			_npcController = this.GetComponent<NpcController> ();
+			_stateMachine = this.GetComponent<IStateMachine> ();
+		}
+
+		public int GetActivationValue ()
+		{
+			return 20;
 		}
 
 		public void OnEnter ()
